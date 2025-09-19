@@ -21,11 +21,20 @@
                 "data": {
                     "phone": "Phone number"
                 }
+            },
+            "sms_code": {
+                "title": "Enter SMS code",
+                "data": {
+                    "phone": "Phone number",
+                    "code": "Code"
+                }
             }
         },
         "error": {
             "sms_auth_not_implemented": "SMS authentication is not implemented yet",
-            "no_devices": "No devices found in account"
+            "no_devices": "No devices found in account",
+            "invalid_phone": "Invalid phone format",
+            "sms_send_failed": "Failed to send SMS code"
         }
     }
 }
