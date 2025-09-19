@@ -1,4 +1,5 @@
 import httpx
+import logging
 
 from .auth import AtmeexAuth
 from .const import COMMON_HEADERS, ATMEEX_API_BASE_URL
@@ -8,6 +9,7 @@ from .device import Device
 class AtmeexClient:
 
     def __init__(self, first_param: str, second_param: str = None) -> None:
+        self._logger = logging.getLogger(__name__)
         # Определяем тип авторизации по наличию @ в первом параметре
         if "@" in first_param:
             # Email/password авторизация
@@ -52,12 +54,14 @@ class AtmeexClient:
         temp_client = httpx.AsyncClient(headers=COMMON_HEADERS, base_url=ATMEEX_API_BASE_URL)
         
         try:
+            self._logger.debug("API request_sms_code phone=%s", phone)
             payload = {
                 "grant_type": "phone_code",
                 "phone": phone,
             }
             response = await temp_client.post("/auth/signup", json=payload)
             response.raise_for_status()
+            self._logger.debug("API request_sms_code status=%s", response.status_code)
             return True
         finally:
             await temp_client.aclose()
@@ -66,8 +70,10 @@ class AtmeexClient:
         if self.http_client is None:
             raise ValueError("Клиент создан только для запроса SMS. Создайте новый клиент с кодом для получения устройств.")
 
+        self._logger.debug("API get_devices")
         resp = await self.http_client.get("/devices")
         devices_list = resp.json()
+        self._logger.debug("API get_devices received items=%s", len(devices_list) if isinstance(devices_list, list) else 'N/A')
         try:
             devices = [Device(self.http_client, device_dict) for device_dict in devices_list]
         except Exception:
