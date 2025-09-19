@@ -1,6 +1,6 @@
 {
-  "domain": "atmeex_cloud",
-  "name": "Atmeex cloud",
+  "domain": "atmeex_cloud + phone_code",
+  "name": "Atmeex cloud + phone_code",
   "dependencies": [],
   "documentation": "http://github.com/Dezmont51/atmeex_hacs",
   "requirements": [
@@ -12,5 +12,5 @@
   ],
   "issue_tracker": "http://github.com/anpavlov/atmeex_hacs/issues",
   "config_flow": true,
-  "version": "0.1.1"
+  "version": "0.1.2"
 }
