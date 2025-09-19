@@ -5,6 +5,7 @@ CONF_AUTH_TYPE = "auth_type"
 AUTH_TYPE_BASIC = "basic"
 AUTH_TYPE_SMS = "sms"
 CONF_PHONE = "phone"
+CONF_CODE = "code"
 PLATFORMS = [
     "climate",
     "fan",

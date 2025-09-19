@@ -25,7 +25,7 @@
         },
         "error": {
             "sms_auth_not_implemented": "SMS authentication is not implemented yet",
-            "no devices found in account": "No devices found in account"
+            "no_devices": "No devices found in account"
         }
     }
 }

@@ -25,7 +25,7 @@
         },
         "error": {
             "sms_auth_not_implemented": "Авторизация по СМС пока недоступна",
-            "no devices found in account": "В аккаунте не найдено устройств"
+            "no_devices": "В аккаунте не найдено устройств"
         }
     }
 }
