@@ -2,12 +2,15 @@
   "domain": "atmeex_cloud",
   "name": "Atmeex cloud",
   "dependencies": [],
-  "documentation": "http://github.com/anpavlov/atmeex_hacs",
+  "documentation": "http://github.com/Dezmont51/atmeex_hacs",
   "requirements": [
-    "atmeexpy==0.1.0"
+    "git+https://github.com/Dezmont51/atmeexpy.git@phone_code"
   ],
-  "codeowners": ["@anpavlov"],
+  "codeowners": [
+    "@anpavlov",
+    "@Dezmont51"
+  ],
   "issue_tracker": "http://github.com/anpavlov/atmeex_hacs/issues",
   "config_flow": true,
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
