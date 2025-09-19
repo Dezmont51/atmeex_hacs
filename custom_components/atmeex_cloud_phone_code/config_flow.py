@@ -12,9 +12,9 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
+        vol.Required(CONF_AUTH_TYPE, default=AUTH_TYPE_BASIC): vol.In([AUTH_TYPE_BASIC, AUTH_TYPE_SMS]),
         vol.Required(CONF_EMAIL): str,
         vol.Required(CONF_PASSWORD): str,
-        vol.Required(CONF_AUTH_TYPE, default=AUTH_TYPE_BASIC): vol.In([AUTH_TYPE_BASIC, AUTH_TYPE_SMS]),
     },
 )
 
