@@ -10,5 +10,5 @@
   ],
   "issue_tracker": "http://github.com/anpavlov/atmeex_hacs/issues",
   "config_flow": true,
-  "version": "0.1.2"
+  "version": "0.1.5"
 }
