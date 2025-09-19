@@ -11,6 +11,7 @@ from homeassistant.helpers.update_coordinator import (
 from .vendor.atmeexpy.atmeexpy.client import AtmeexClient
 
 from .const import CONF_ACCESS_TOKEN, CONF_REFRESH_TOKEN, DOMAIN, PLATFORMS
+from .const import CONF_AUTH_TYPE, AUTH_TYPE_BASIC, AUTH_TYPE_SMS, CONF_PHONE, CONF_CODE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,8 +20,15 @@ async def async_setup(hass: HomeAssistant, config: dict):
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    api = AtmeexClient(entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
-    api.restore_tokens(entry.data[CONF_ACCESS_TOKEN], entry.data[CONF_REFRESH_TOKEN])
+    auth_type = entry.data.get(CONF_AUTH_TYPE, AUTH_TYPE_BASIC)
+    _LOGGER.debug("Init setup_entry auth_type=%s", auth_type)
+
+    if auth_type == AUTH_TYPE_SMS:
+        api = AtmeexClient(entry.data[CONF_PHONE], entry.data.get(CONF_CODE, ""))
+    else:
+        api = AtmeexClient(entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
+
+    api.restore_tokens(entry.data.get(CONF_ACCESS_TOKEN), entry.data.get(CONF_REFRESH_TOKEN))
 
     coordinator = AtmeexDataCoordinator(hass, api, entry)
     hass.data[DOMAIN][entry.entry_id] = coordinator
