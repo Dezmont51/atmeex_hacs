@@ -11,19 +11,19 @@ from .const import CONF_AUTH_TYPE, AUTH_TYPE_BASIC, AUTH_TYPE_SMS
 _LOGGER = logging.getLogger(__name__)
 
 
-def _build_schema(auth_type: str | None):
-    if auth_type == AUTH_TYPE_SMS:
-        return vol.Schema(
-            {
-                vol.Required(CONF_AUTH_TYPE, default=AUTH_TYPE_SMS): vol.In([AUTH_TYPE_BASIC, AUTH_TYPE_SMS]),
-                vol.Required(CONF_EMAIL): str,
-            }
-        )
-    # default/basic
+def _user_schema(default_auth_type=None, default_email=None):
     return vol.Schema(
         {
-            vol.Required(CONF_AUTH_TYPE, default=AUTH_TYPE_BASIC): vol.In([AUTH_TYPE_BASIC, AUTH_TYPE_SMS]),
-            vol.Required(CONF_EMAIL): str,
+            vol.Required(CONF_AUTH_TYPE, default=default_auth_type or AUTH_TYPE_BASIC): vol.In([AUTH_TYPE_BASIC, AUTH_TYPE_SMS]),
+            vol.Required(CONF_EMAIL, default=default_email or ""): str,
+        }
+    )
+
+
+def _basic_schema(default_email=None):
+    return vol.Schema(
+        {
+            vol.Required(CONF_EMAIL, default=default_email or ""): str,
             vol.Required(CONF_PASSWORD): str,
         }
     )
@@ -34,41 +34,62 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        self._auth_type = AUTH_TYPE_BASIC
+        self._email = None
+
     async def async_step_user(self, user_input=None):
-        """Handle the initial step."""
+        """Step 1: choose auth type and enter email."""
         if user_input is None:
             return self.async_show_form(
-                step_id="user", data_schema=_build_schema(AUTH_TYPE_BASIC)
+                step_id="user", data_schema=_user_schema(self._auth_type, self._email)
             )
 
         errors = {}
 
-        auth_type = user_input.get(CONF_AUTH_TYPE, AUTH_TYPE_BASIC)
+        self._auth_type = user_input.get(CONF_AUTH_TYPE, AUTH_TYPE_BASIC)
+        self._email = user_input.get(CONF_EMAIL)
 
-        # Если выбрано SMS — показываем только email и ставим заглушку
-        if auth_type == AUTH_TYPE_SMS:
+        if self._auth_type == AUTH_TYPE_SMS:
+            # Заглушка: SMS авторизация пока не реализована — остаёмся на этом шаге
             errors["base"] = "sms_auth_not_implemented"
             return self.async_show_form(
-                step_id="user", data_schema=_build_schema(AUTH_TYPE_SMS), errors=errors
+                step_id="user", data_schema=_user_schema(self._auth_type, self._email), errors=errors
             )
 
-        # BASIC авторизация: ожидаем и email, и password
+        # Для BASIC переходим на шаг ввода пароля
+        return await self.async_step_basic()
+
+    async def async_step_basic(self, user_input=None):
+        """Step 2 (basic): ask for password (code)."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="basic", data_schema=_basic_schema(self._email)
+            )
+
+        errors = {}
+
         try:
             atmeex = AtmeexClient(user_input.get(CONF_EMAIL), user_input.get(CONF_PASSWORD))
             devices = await atmeex.get_devices()
             if len(devices) == 0:
                 errors["base"] = "no devices found in account"
             else:
-                user_input[CONF_ACCESS_TOKEN] = atmeex.auth._access_token
-                user_input[CONF_REFRESH_TOKEN] = atmeex.auth._refresh_token
+                data = {
+                    CONF_EMAIL: user_input.get(CONF_EMAIL),
+                    CONF_PASSWORD: user_input.get(CONF_PASSWORD),
+                    CONF_AUTH_TYPE: AUTH_TYPE_BASIC,
+                    CONF_ACCESS_TOKEN: atmeex.auth._access_token,
+                    CONF_REFRESH_TOKEN: atmeex.auth._refresh_token,
+                }
                 return self.async_create_entry(
-                    title=user_input.get(CONF_EMAIL),
-                    data=user_input,
+                    title=data.get(CONF_EMAIL),
+                    data=data,
                 )
         except Exception as exc:
             _LOGGER.exception("Unexpected exception")
             errors["base"] = str(exc)
 
         return self.async_show_form(
-            step_id="user", data_schema=_build_schema(AUTH_TYPE_BASIC), errors=errors
+            step_id="basic", data_schema=_basic_schema(user_input.get(CONF_EMAIL)), errors=errors
         )
