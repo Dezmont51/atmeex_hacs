@@ -6,6 +6,7 @@ from .vendor.atmeexpy.atmeexpy.client import AtmeexClient
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_PASSWORD, CONF_EMAIL
 from .const import DOMAIN, CONF_ACCESS_TOKEN, CONF_REFRESH_TOKEN
+from .const import CONF_AUTH_TYPE, AUTH_TYPE_BASIC, AUTH_TYPE_SMS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_EMAIL): str,
         vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_AUTH_TYPE, default=AUTH_TYPE_BASIC): vol.In([AUTH_TYPE_BASIC, AUTH_TYPE_SMS]),
     },
 )
 
@@ -29,6 +31,14 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         errors = {}
+
+        auth_type = user_input.get(CONF_AUTH_TYPE, AUTH_TYPE_BASIC)
+        if auth_type == AUTH_TYPE_SMS:
+            # Заглушка: SMS авторизация пока не реализована
+            errors["base"] = "sms_auth_not_implemented"
+            return self.async_show_form(
+                step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            )
 
         try:
             atmeex = AtmeexClient(user_input.get(CONF_EMAIL), user_input.get(CONF_PASSWORD))
