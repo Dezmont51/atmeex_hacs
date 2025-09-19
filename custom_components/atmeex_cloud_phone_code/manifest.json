@@ -3,9 +3,7 @@
   "name": "Atmeex cloud + phone_code",
   "dependencies": [],
   "documentation": "http://github.com/Dezmont51/atmeex_hacs",
-  "requirements": [
-    "git+https://github.com/Dezmont51/atmeexpy.git@phone_code"
-  ],
+  "requirements": [],
   "codeowners": [
     "@anpavlov",
     "@Dezmont51"

@@ -1,7 +1,7 @@
 import logging
 
 import voluptuous as vol
-from atmeexpy.client import AtmeexClient
+from .vendor.atmeexpy.atmeexpy.client import AtmeexClient
 
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_PASSWORD, CONF_EMAIL

@@ -8,7 +8,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from atmeexpy.client import AtmeexClient
+from .vendor.atmeexpy.atmeexpy.client import AtmeexClient
 
 from .const import CONF_ACCESS_TOKEN, CONF_REFRESH_TOKEN, DOMAIN, PLATFORMS
 

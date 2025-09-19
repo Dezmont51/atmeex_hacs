@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PRECISION_WHOLE, UnitOfTemperature, ATTR_TEMPERATURE
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from atmeexpy.device import Device
+from .vendor.atmeexpy.atmeexpy.device import Device
 
 from . import AtmeexDataCoordinator
 
