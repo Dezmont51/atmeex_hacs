@@ -1,5 +1,5 @@
 {
-  "domain": "atmeex_cloud + phone_code",
+  "domain": "atmeex_cloud_phone_code",
   "name": "Atmeex cloud + phone_code",
   "dependencies": [],
   "documentation": "http://github.com/Dezmont51/atmeex_hacs",
