@@ -1,0 +1,31 @@
+{
+    "title": "Atmeex Cloud + phone_code",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Авторизация",
+                "description": "Выберите способ авторизации",
+                "data": {
+                    "auth_type": "Способ авторизации"
+                }
+            },
+            "basic": {
+                "title": "Авторизация по паролю",
+                "data": {
+                    "email": "E-mail",
+                    "password": "Пароль"
+                }
+            },
+            "sms": {
+                "title": "Авторизация по СМС",
+                "data": {
+                    "phone": "Телефон"
+                }
+            }
+        },
+        "error": {
+            "sms_auth_not_implemented": "Авторизация по СМС пока недоступна",
+            "no devices found in account": "В аккаунте не найдено устройств"
+        }
+    }
+}

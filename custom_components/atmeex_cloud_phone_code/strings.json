@@ -1,0 +1,31 @@
+{
+    "title": "Atmeex Cloud + phone_code",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Authentication",
+                "description": "Select authentication method",
+                "data": {
+                    "auth_type": "Authentication method"
+                }
+            },
+            "basic": {
+                "title": "Password authentication",
+                "data": {
+                    "email": "E-mail",
+                    "password": "Password"
+                }
+            },
+            "sms": {
+                "title": "SMS authentication",
+                "data": {
+                    "phone": "Phone number"
+                }
+            }
+        },
+        "error": {
+            "sms_auth_not_implemented": "SMS authentication is not implemented yet",
+            "no devices found in account": "No devices found in account"
+        }
+    }
+}

@@ -4,6 +4,7 @@ CONF_REFRESH_TOKEN = "refresh_token"
 CONF_AUTH_TYPE = "auth_type"
 AUTH_TYPE_BASIC = "basic"
 AUTH_TYPE_SMS = "sms"
+CONF_PHONE = "phone"
 PLATFORMS = [
     "climate",
     "fan",
