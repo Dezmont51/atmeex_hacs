@@ -34,12 +34,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = coordinator
     await coordinator.async_refresh()
 
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(
-                entry, platform
-            )
-        )
+    # Forward entry to platforms (modern API)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 class AtmeexDataCoordinator(DataUpdateCoordinator):
