@@ -98,6 +98,11 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         try:
+            email = (user_input.get(CONF_EMAIL) or "").strip().lower()
+            unique_id = f"user:{email}"
+            # Устанавливаем уникальный ID записи и предотвращаем дублирование
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
             _LOGGER.debug("CF basic auth: email=%s", user_input.get(CONF_EMAIL))
             atmeex = AtmeexClient(user_input.get(CONF_EMAIL), user_input.get(CONF_PASSWORD))
             devices = await atmeex.get_devices()
@@ -138,6 +143,9 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         try:
             phone = _normalize_phone(raw_phone)
             _LOGGER.debug("CF sms normalized phone=%s", phone)
+            # Устанавливаем уникальный ID записи сразу, как только знаем телефон
+            await self.async_set_unique_id(f"phone:{phone}")
+            self._abort_if_unique_id_configured()
         except Exception as norm_exc:
             _LOGGER.debug("CF sms invalid phone input=%s, err=%s", raw_phone, norm_exc)
             errors["base"] = "invalid_phone"

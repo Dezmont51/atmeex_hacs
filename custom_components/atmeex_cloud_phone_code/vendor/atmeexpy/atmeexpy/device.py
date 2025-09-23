@@ -44,3 +44,23 @@ class Device:
             await self._set_params(DeviceSettingsSetModel(u_damp_pos=0, u_pwr_on=True))
         else:
             await self._set_params(DeviceSettingsSetModel(u_damp_pos=2, u_pwr_on=False))
+
+    async def enable_passive_ventilation(self):
+        # пассивное проветривание: питание выкл, заслонка открыта
+        await self._set_params(DeviceSettingsSetModel(u_pwr_on=False, u_damp_pos=0))
+
+    async def enable_recuperation(self):
+        # смешанный режим: заслонка 1, питание вкл
+        await self._set_params(DeviceSettingsSetModel(u_pwr_on=True, u_damp_pos=1))
+
+    async def open_supply_valve(self):
+        # приточный клапан: открыть заслонку (питание оставим как есть)
+        await self._set_params(DeviceSettingsSetModel(u_damp_pos=0))
+
+    async def close_supply_valve(self):
+        # закрыть приточный клапан
+        await self._set_params(DeviceSettingsSetModel(u_damp_pos=2))
+
+    async def enable_supply_mode(self):
+        # Приточный режим: питание вкл, заслонка открыта
+        await self._set_params(DeviceSettingsSetModel(u_pwr_on=True, u_damp_pos=0))

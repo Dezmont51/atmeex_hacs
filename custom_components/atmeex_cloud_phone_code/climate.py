@@ -39,6 +39,26 @@ class AtmeexClimateEntity(CoordinatorEntity, ClimateEntity):
         self.coordinator = coordinator
         self.device = device
 
+        # Формируем стабильные идентификаторы
+        device_mac = getattr(self.device.model, "mac", None)
+        device_id = str(getattr(self.device.model, "id", "unknown"))
+        unique_base = (device_mac or device_id)
+        self._attr_unique_id = f"{unique_base}_climate"
+
+        # Привязка к устройству в реестре устройств
+        manufacturer = "Atmeex"
+        model_name = getattr(self.device.model, "model", None)
+        sw_ver = getattr(self.device.model, "fw_ver", None)
+        device_name = getattr(self.device.model, "name", None)
+        identifier_value = device_mac or f"id-{device_id}"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, identifier_value)},
+            "manufacturer": manufacturer,
+            "model": model_name,
+            "name": device_name,
+            "sw_version": sw_ver,
+        }
+
         self._last_mode = None
         self._update_state()
 

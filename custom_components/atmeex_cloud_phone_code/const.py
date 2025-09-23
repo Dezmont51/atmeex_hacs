@@ -9,4 +9,6 @@ CONF_CODE = "code"
 PLATFORMS = [
     "climate",
     "fan",
+    "button",
+    "select",
 ]

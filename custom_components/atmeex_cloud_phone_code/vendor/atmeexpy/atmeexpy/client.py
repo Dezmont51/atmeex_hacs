@@ -1,4 +1,6 @@
 import httpx
+import asyncio
+import ssl
 import logging
 
 from .auth import AtmeexAuth
@@ -8,31 +10,82 @@ from .device import Device
 
 class AtmeexClient:
 
-    def __init__(self, first_param: str, second_param: str = None) -> None:
+    def __init__(
+        self,
+        first_param: str = None,
+        second_param: str = None,
+        *,
+        email: str = "",
+        password: str = "",
+        phone: str = "",
+        code: str = "",
+        refresh_token: str = "",
+    ) -> None:
         self._logger = logging.getLogger(__name__)
-        # Определяем тип авторизации по наличию @ в первом параметре
-        if "@" in first_param:
-            # Email/password авторизация
-            if not second_param:
+        self._ssl_context = None
+
+        # 1) Явные именованные параметры имеют приоритет
+        if refresh_token:
+            self.auth = AtmeexAuth(refresh_token=refresh_token)
+            self.http_client = None
+            return
+
+        if email:
+            if not password:
                 raise ValueError("Для email авторизации необходимо указать пароль")
+            self.auth = AtmeexAuth(email=email, password=password)
+            self.http_client = None
+            return
+
+        if phone:
+            if code:
+                # Phone/code авторизация
+                self.auth = AtmeexAuth(phone=phone, phone_code=code)
+                self.http_client = None
+            else:
+                # Только номер телефона (для запроса SMS) - БЕЗ авторизации
+                self.auth = AtmeexAuth(phone=phone)
+                self.http_client = None
+            return
+
+        # 2) Обратная совместимость с позиционными параметрами
+        if first_param is None:
+            raise ValueError("Не указаны параметры авторизации")
+
+        if second_param is not None:
+            # Полная совместимость с самой первой версией: 2 позиционных → email/password
             self.auth = AtmeexAuth(email=first_param, password=second_param)
-            # Создаем клиент С авторизацией
-            self.http_client = httpx.AsyncClient(auth=self.auth, headers=COMMON_HEADERS, base_url=ATMEEX_API_BASE_URL)
-        elif second_param is None:
-            # Только номер телефона (для запроса SMS) - БЕЗ авторизации
-            self.auth = AtmeexAuth(phone=first_param)
-            # НЕ создаем http_client - он создается временно в request_sms_code()
             self.http_client = None
         else:
-            # Phone/code авторизация
-            self.auth = AtmeexAuth(phone=first_param, phone_code=second_param)
-            # Создаем клиент С авторизацией
-            self.http_client = httpx.AsyncClient(auth=self.auth, headers=COMMON_HEADERS, base_url=ATMEEX_API_BASE_URL)
+            # Только номер телефона (для запроса SMS) - БЕЗ авторизации
+            self.auth = AtmeexAuth(phone=first_param)
+            self.http_client = None
+
+    async def _ensure_ssl_context(self) -> ssl.SSLContext:
+        if self._ssl_context is None:
+            def _build_ctx():
+                return ssl.create_default_context()
+            self._ssl_context = await asyncio.to_thread(_build_ctx)
+        return self._ssl_context
+
+    async def _ensure_http_client(self) -> None:
+        if self.http_client is None:
+            ssl_ctx = await self._ensure_ssl_context()
+            self.http_client = httpx.AsyncClient(
+                auth=self.auth,
+                headers=COMMON_HEADERS,
+                base_url=ATMEEX_API_BASE_URL,
+                verify=ssl_ctx,
+                timeout=httpx.Timeout(15.0),
+            )
 
 
     def restore_tokens(self, access_token: str, refresh_token: str):
-        self.auth._access_token = access_token
-        self.auth._refresh_token = refresh_token
+        # Не перезатираем токены, если переданы None или пустые строки
+        if access_token:
+            self.auth._access_token = access_token
+        if refresh_token:
+            self.auth._refresh_token = refresh_token
 
     async def request_sms_code(self, phone: str = None) -> bool:
         """
@@ -51,7 +104,8 @@ class AtmeexClient:
             raise ValueError("Необходимо указать номер телефона")
         
         # Создаем временный HTTP клиент без авторизации для запроса SMS
-        temp_client = httpx.AsyncClient(headers=COMMON_HEADERS, base_url=ATMEEX_API_BASE_URL)
+        ssl_ctx = await self._ensure_ssl_context()
+        temp_client = httpx.AsyncClient(headers=COMMON_HEADERS, base_url=ATMEEX_API_BASE_URL, verify=ssl_ctx, timeout=httpx.Timeout(15.0))
         
         try:
             self._logger.debug("API request_sms_code phone=%s", phone)
@@ -68,12 +122,10 @@ class AtmeexClient:
 
     async def get_devices(self):
         if self.http_client is None:
-            raise ValueError("Клиент создан только для запроса SMS. Создайте новый клиент с кодом для получения устройств.")
+            await self._ensure_http_client()
 
-        self._logger.debug("API get_devices")
         resp = await self.http_client.get("/devices")
         devices_list = resp.json()
-        self._logger.debug("API get_devices received items=%s", len(devices_list) if isinstance(devices_list, list) else 'N/A')
         try:
             devices = [Device(self.http_client, device_dict) for device_dict in devices_list]
         except Exception:
