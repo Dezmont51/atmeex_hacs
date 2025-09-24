@@ -32,7 +32,9 @@ class AtmeexClient:
 
         if email:
             if not password:
-                raise ValueError("Для email авторизации необходимо указать пароль")
+                raise ValueError(
+                    "Для email авторизации необходимо указать пароль"
+                )
             self.auth = AtmeexAuth(email=email, password=password)
             self.http_client = None
             return
@@ -53,7 +55,8 @@ class AtmeexClient:
             raise ValueError("Не указаны параметры авторизации")
 
         if second_param is not None:
-            # Полная совместимость с самой первой версией: 2 позиционных → email/password
+            # Полная совместимость с самой первой версией:
+            # 2 позиционных → email/password
             self.auth = AtmeexAuth(email=first_param, password=second_param)
             self.http_client = None
         else:
@@ -63,22 +66,31 @@ class AtmeexClient:
 
     async def _ensure_ssl_context(self) -> ssl.SSLContext:
         if self._ssl_context is None:
+            self._logger.debug("HTTP: building SSL context")
+
             def _build_ctx():
                 return ssl.create_default_context()
             self._ssl_context = await asyncio.to_thread(_build_ctx)
+            self._logger.debug("HTTP: SSL context ready")
         return self._ssl_context
 
     async def _ensure_http_client(self) -> None:
         if self.http_client is None:
+            self._logger.debug("HTTP: creating AsyncClient")
             ssl_ctx = await self._ensure_ssl_context()
+            transport = httpx.AsyncHTTPTransport(retries=2)
             self.http_client = httpx.AsyncClient(
                 auth=self.auth,
                 headers=COMMON_HEADERS,
                 base_url=ATMEEX_API_BASE_URL,
                 verify=ssl_ctx,
                 timeout=httpx.Timeout(15.0),
+                http2=False,
+                trust_env=True,
+                follow_redirects=True,
+                transport=transport,
             )
-
+            self._logger.debug("HTTP: AsyncClient ready")
 
     def restore_tokens(self, access_token: str, refresh_token: str):
         # Не перезатираем токены, если переданы None или пустые строки
@@ -90,23 +102,33 @@ class AtmeexClient:
     async def request_sms_code(self, phone: str = None) -> bool:
         """
         Запросить SMS код для авторизации
-        
+
         Args:
             phone: Номер телефона (если не указан, используется из клиента)
-            
+
         Returns:
             bool: True если SMS отправлен успешно
         """
         if phone is None:
             phone = self.auth.phone
-        
+
         if not phone:
             raise ValueError("Необходимо указать номер телефона")
-        
+
         # Создаем временный HTTP клиент без авторизации для запроса SMS
         ssl_ctx = await self._ensure_ssl_context()
-        temp_client = httpx.AsyncClient(headers=COMMON_HEADERS, base_url=ATMEEX_API_BASE_URL, verify=ssl_ctx, timeout=httpx.Timeout(15.0))
-        
+        transport = httpx.AsyncHTTPTransport(retries=2)
+        temp_client = httpx.AsyncClient(
+            headers=COMMON_HEADERS,
+            base_url=ATMEEX_API_BASE_URL,
+            verify=ssl_ctx,
+            timeout=httpx.Timeout(15.0),
+            http2=False,
+            trust_env=True,
+            follow_redirects=True,
+            transport=transport
+        )
+
         try:
             self._logger.debug("API request_sms_code phone=%s", phone)
             payload = {
@@ -115,7 +137,9 @@ class AtmeexClient:
             }
             response = await temp_client.post("/auth/signup", json=payload)
             response.raise_for_status()
-            self._logger.debug("API request_sms_code status=%s", response.status_code)
+            self._logger.debug(
+                "API request_sms_code status=%s", response.status_code
+            )
             return True
         finally:
             await temp_client.aclose()
@@ -127,7 +151,10 @@ class AtmeexClient:
         resp = await self.http_client.get("/devices")
         devices_list = resp.json()
         try:
-            devices = [Device(self.http_client, device_dict) for device_dict in devices_list]
+            devices = [
+                Device(self.http_client, device_dict)
+                for device_dict in devices_list
+            ]
         except Exception:
             print(devices_list)
             return []
