@@ -194,7 +194,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
 
         try:
             _LOGGER.debug("CF sms_code trying auth for phone=%s", phone)
-            client = AtmeexClient(phone, code)
+            client = AtmeexClient(phone=phone, code=code)
             devices = await client.get_devices()
             _LOGGER.debug("CF sms_code devices_count=%s", len(devices) if isinstance(devices, list) else 'N/A')
             if len(devices) == 0:
