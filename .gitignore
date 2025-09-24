@@ -11,3 +11,4 @@ ENV/
 
 build/
 dist/
+.vscode
